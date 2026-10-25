@@ -1,0 +1,86 @@
+\chapter{Objetivos}
+\label{cap:obj} % etiqueta para poder referenciar luego en el texto con ~\ref{sec:intro}
+En este capítulo se exponen el objetivo general de este Trabajo Fin de Grado y los objetivos específicos que se han desarrollado para alcanzar dicho objetivo general. Asimismo se describe la planificación temporal del proyecto, detallando las diferentes fases de desarrollo y las tareas que se han llevado a cabo en cada una de ellas.
+
+
+\section{Objetivo General}
+\label{sec:objgen}
+
+\section{Objetivos Específicos}
+\label{sec:objesp}
+Con el fin de alcanzar el objetivo general del Trabajo se han desarrollado los siguientes objetivos específicos para facilitar el desarrollo del mismo:
+\begin{itemize}
+    \item Analizar el funcionamiento e implementación de la versión original de \textit{Dr. Snap!} para identificar y desarrollar o resolver posibles áreas de mejora y problemas de funcionamiento.
+    \item Implementar un \textit{Batch Mode}, que permita analizar gran cantidad de proyectos de \textit{Snap!} de forma simultánea y devuelva los resultados en un formato que facilite su análisis individual y conjunto.
+    \item Blindar \textit{Dr. Snap!} frente a posibles amenazas para proteger el servidor en el que se despliegue.
+    \item Encontrar una ubicación y desplegar una \textit{versión beta} de \textit{Dr. Snap!} abierta a propuestas de mejora.
+    \item Validar el correcto funcionamiento y aportación al desarrollo del pensamiento computacional de las mejoras y nuevas funcionalidades incluidas en \textit{Dr. Snap!} a través de la realización de pruebas experimentales y el análisis de los resultados obtenidos en estas.
+\end{itemize}
+
+\section{Planificación Temporal}
+\label{sec:plan}
+El desarrollo de este Trabajo Fin de Grado se ha extendido durante aproximadamente diez meses; en concreto de noviembre de 2025 a septiembre de 2026. Durante este periodo, se han dedicado aproximadamente 3 horas diarias durante los días laborables en horario no lectivo al desarrollo del presente proyecto, existiendo cierta variabilidad en la cantidad de horas diarias dependiendo de variables externas.
+
+Teniendo en cuenta lo anterior, el proyecto se ha desarrollado a través de la consecución de diferentes fases que denominaremos \textit{Sprints}. Cada \textit{Sprint} incluye tareas específicas necesarias para el alcance de los objetivos con anterioridad descritos. A continuación se describen brevemente estas fases:
+\begin{itemize}
+    \item \textbf{Sprint 1 (noviembre 2025 - diciembre 2025)} Estudio y análisis de la versión de \textit{Dr. Snap!} desarrollada por Del Prado y búsqueda de problemas de funcionamiento y áreas de mejora. Para ello, se realizó una revisión del código fuente\footnote{El código fuente de la versión de Del Prado de \textit{Dr. Snap!} se puede encontrar en el siguiente repositorio de GitHub: \url{https://github.com/mdelprado2017/Dr_Snap}}, así como un estudio del funcionamiento de \textit{Snap!} y comparativa de las funcionalidades con \textit{Dr. Scratch}\footnote{Podemos acceder a la aplicación web a través de la siguiente dirección: \url{https://www.drscratch.org/}}. 
+    \item \textbf{Sprint 2 (diciembre 2025 - enero 2026)} Implementación del análisis de un proyecto por URL a través de la API de \textit{Snap!} y resolución de problemas de traducción.
+    \item \textbf{Sprint 3 (enero 2026 - febrero 2026)} Desarrollo del \textit{Batch Mode} y refactorización del código para mejorar la eficiencia y legibilidad del mismo. Además de modificar la lógica de parseo de los proyectos \texttt{.xml}.
+    \item \textbf{Sprint 4 (Primera mitad febrero 2026)} Adición del análisis de \textit{scripts} duplicados dentro de los \textit{Malos Hábitos} y resolución de problemas encontrados en el análisis de código muerto.
+    \item \textbf{Sprint 5 (Segunda mitad febrero 2026)} Modificación del logotipo de \textit{Dr. Snap!} y realización de cambios en la interfaz de usuario para mejorar la experiencia de usuario y ajustar al nuevo logotipo.
+    \item \textbf{Sprint 6 (marzo 2026 - abril 2026)} Mejora de la ciberseguridad de la aplicación web, realizar tests de funcionamiento de las medidas aplicadas. Asimismo, inclusión de un aviso de que es una \textit{versión beta} y un formulario de contacto para que los usuarios puedan enviar propuestas de mejora.
+    \item \textbf{Sprint 7 (abril 2026 - mayo 2026)} Despliegue de la \textit{versión beta} de \textit{Dr. Snap!} en un servidor y realización de pruebas de funcionamiento y de ciberseguridad.
+    \item \textbf{Sprint 8 (mayo 2026 - julio 2026)} Refactorización del código y plantillas, así como, eliminación de los que ya no sean necesarios para mejorar la experiencia de usuario y facilitar futuras modificaciones del código.
+    \item \textbf{Sprint 9 (julio 2026 - septiembre 2026)} Realización de pruebas experimentales para validar el correcto funcionamiento de la aplicación web y su contribución al desarrollo del pensamiento computacional. Análisis de los resultados obtenidos y redactar la memoria del proyecto.
+    \item \textbf{Sprint 10 (septiembre 2026)} Entrevista a Jens Mönig y experimento con profesores de secundaria. Diseño de experimento con alumnos en el aula. Incorporación de los resultados y experimento diseñado a la memoria del proyecto y entrega de la misma.
+\end{itemize}
+
+La consecución de dichos Sprints en el orden descrito se puede revisar en el repositorio de GitHub siguiente, donde, además, se encuentra el código fuente de la aplicación web implementada: \url{https://github.com/miribuenot/Dr_Snap/tree/main}
+
+Asimismo, se muestra en la Figura \ref{fig:gantt_sprints_colores} un diagrama de Gantt con la planificación temporal de los Sprints y las tareas que se han llevado a cabo en cada uno de ellos.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{ % Ajusta el diagrama al ancho de la página
+    \begin{ganttchart}[
+        hgrid,
+        vgrid,
+        x unit=1.4cm,
+        y unit title=0.6cm,
+        y unit chart=0.7cm,
+        title label font=\bfseries\footnotesize,
+        bar label font=\footnotesize,
+        bar height=0.6,
+    ]{1}{11}
+
+    % Títulos de años y meses
+    \gantttitle{2025}{2} \gantttitle{2026}{9} \\
+    \gantttitle{Nov}{1} 
+    \gantttitle{Dic}{1} 
+    \gantttitle{Ene}{1} 
+    \gantttitle{Feb}{1} 
+    \gantttitle{Mar}{1} 
+    \gantttitle{Abr}{1} 
+    \gantttitle{May}{1} 
+    \gantttitle{Jun}{1} 
+    \gantttitle{Jul}{1} 
+    \gantttitle{Ago}{1} 
+    \gantttitle{Sep}{1} \\
+
+    % Sprints con colores personalizados
+    \ganttbar[bar/.style={fill=red!30, draw=red!80, rounded corners=2pt}]{Sprint 1: Análisis Inicial}{1}{2} \\
+    \ganttbar[bar/.style={fill=orange!30, draw=orange!80, rounded corners=2pt}]{Sprint 2: API \& Traducción}{2}{3} \\
+    \ganttbar[bar/.style={fill=yellow!40, draw=yellow!90, rounded corners=2pt}]{Sprint 3: Batch Mode \& Parseo}{3}{4} \\
+    \ganttbar[bar/.style={fill=green!30, draw=green!80, rounded corners=2pt}]{Sprint 4: Scripts Duplicados}{4}{4.45} \\
+    \ganttbar[bar/.style={fill=teal!30, draw=teal!80, rounded corners=2pt}]{Sprint 5: Logo \& Interfaz}{4.55}{5} \\
+    \ganttbar[bar/.style={fill=cyan!30, draw=cyan!80, rounded corners=2pt}]{Sprint 6: Ciberseguridad \& Versión Beta}{5}{6} \\
+    \ganttbar[bar/.style={fill=blue!30, draw=blue!80, rounded corners=2pt}]{Sprint 7: Despliegue}{6}{7} \\
+    \ganttbar[bar/.style={fill=violet!30, draw=violet!80, rounded corners=2pt}]{Sprint 8: Refactorización}{7}{9} \\
+    \ganttbar[bar/.style={fill=magenta!30, draw=magenta!80, rounded corners=2pt}]{Sprint 9: Pruebas y Memoria}{9}{11} \\
+    \ganttbar[bar/.style={fill=gray!30, draw=gray!80, rounded corners=2pt}]{Sprint 10: Entrevistas y Cierre}{11}{11}
+
+    \end{ganttchart}
+    }
+    \caption{Diagrama de Gantt de los Sprints del proyecto.}
+    \label{fig:gantt_sprints_colores}
+\end{figure}

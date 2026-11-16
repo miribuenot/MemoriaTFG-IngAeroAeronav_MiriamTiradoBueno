@@ -1,0 +1,211 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% Definición de colores para el entorno de código
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+% Configuración del entorno de código (soporte para tildes y formato)
+\lstset{
+    language=Matlab,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{mauve},
+    frame=single,
+    tabsize=4,
+    extendedchars=true,
+    literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1 {º}{{$^\circ$}}1
+}
+
+\begin{document}
+
+\section*{Metodología de Optimización Multicriterio}
+
+En el diseño conceptual de una aeronave furtiva, el objetivo fundamental es resolver el compromiso clásico entre la baja observabilidad electromagnética (minimización de la firma radar o RCS) y el mantenimiento de altas prestaciones aerodinámicas \cite{raymer, deb}. Dado que probar a mano todas las combinaciones geométricas y operativas posibles resulta inviable por coste computacional, se ha desarrollado un entorno de optimización automatizado de seis dimensiones (6D) programado en MATLAB. Este sistema evalúa miles de configuraciones en un espacio de búsqueda continuo, permitiendo la variación conjunta de la geometría y del ángulo de ataque operativo ($\alpha$), garantizando que el avión cumpla estrictamente con los requisitos de sustentación y estabilidad longitudinal.
+
+\subsection*{1. Configuración de Referencia (Diseño Base)}
+Todo el proceso de optimización no parte de cero, sino de una \textbf{configuración de referencia} (denominada Caso Base o Caso 2 en las bases de datos aerodinámicas y de telecomunicaciones). Este diseño inicial cuenta con una cresta del $35\%$, un espesor relativo $T/C$ del $4\%$, un ángulo de borde de ataque (Deltale) de $15^\circ$, una torsión alar nula ($0^\circ$) y un ángulo de flecha de $53^\circ$ \cite{anderson}. 
+
+Para fijar el listón de sustentación mínima innegociable de la misión, se toma como referencia la condición de pico de máxima eficiencia del prototipo original (Caso 1 a un ángulo de ataque nominal $\alpha = 5.0^\circ$), donde la plataforma original alcanza un coeficiente de sustentación de diseño $C_{L,\text{ref}} = 0.2164$ y una eficiencia aerodinámica $E = 14.38$ \cite{anderson}. La Sección Radar Equivalente (RCS) frontal de partida de la plataforma sin optimizar es de $-34.48$ dBsm \cite{anderson}.
+
+\subsection*{2. Definición del Espacio de Diseño Hexadimensional (6D)}
+El primer paso computacional consiste en delimitar qué parámetros de la geometría y del vuelo del avión tiene permiso el algoritmo para modificar, lo que se conoce como \textbf{espacio de diseño}. A diferencia de formulaciones rígidas anteriores, el vector de variables continuas $\mathbf{x}$ se expande a seis dimensiones, incorporando el ángulo de ataque operativo ($\alpha$) como variable continua libre junto a los cinco parámetros geométricos principales:
+\begin{equation}
+    \mathbf{x} = [c, t, \delta, \tau, \Lambda, \alpha]
+\end{equation}
+donde $c \in [35\%, 60\%]$ es el porcentaje de cresta, $t \in [4\%, 8\%]$ es el espesor relativo ($T/C$), $\delta \in [10^\circ, 20^\circ]$ es el ángulo del borde de ataque (Deltale), $\tau \in [0^\circ, 6^\circ]$ es la torsión alar (Tor), $\Lambda \in [45^\circ, 66^\circ]$ es el ángulo de flecha y $\alpha \in [3.0^\circ, 6.0^\circ]$ es el ángulo de ataque operativo ($\text{AoA}$) \cite{raymer, anderson}.
+
+\subsection*{3. Metamodelo de Superficie de Respuesta (RSM) de Doble Componente e Interpolación PCHIP}
+Lanzar simulaciones 3D completas de Dinámica de Fluidos Computacional (CFD) y Electromagnetismo para cada pequeña modificación geométrica requeriría un coste computacional inasumible. Para solucionarlo, se emplea la técnica del \textbf{Metamodelo de Superficie de Respuesta (RSM, \textit{Response Surface Methodology})}, respaldada por la teoría de diseño de experimentos de Montgomery \cite{montgomery}. 
+
+Dado que la matriz completa de 18 casos geométricos simulados en CFD se encuentra disponible a $\alpha = 4.0^\circ$, el metamodelo utiliza una arquitectura hibridada de doble componente: calcula los \textbf{incrementos geométricos} respecto al caso base a $4.0^\circ$ ($\mathbf{x}_0$) y los desacopla del efecto aerodinámico del ángulo de ataque ($\alpha$), el cual se extrae directamente de la polar continua del Caso 2 \cite{montgomery, anderson}:
+\begin{equation}
+    \text{Respuesta}(\mathbf{x}, \alpha) = \text{Respuesta}_0 + \sum_{i=1}^{5} \Delta \text{Respuesta}_i(x_i) + \Delta \text{Respuesta}_{\alpha}(\alpha)
+\end{equation}
+
+Para conectar de forma matemáticamente robusta los puntos discretos simulados en el Excel sin generar oscilaciones extrañas o no físicas, se utiliza una interpolación cúbica a trozos que preserva la forma, conocida como \textbf{PCHIP} (\textit{Piecewise Cubic Hermite Interpolating Polynomial}) \cite{montgomery, anderson}. A diferencia de los polinomios de alto grado que oscilan entre puntos de datos, el PCHIP garantiza una interpolación monótona por tramos cúbicos, asegurando que las derivadas se adapten suavemente a la física del fluido \cite{montgomery, anderson}. Las ecuaciones predictivas implementadas en MATLAB para la RCS, el coeficiente de sustentación ($C_L$), la eficiencia ($E$) y el momento de cabeceo ($C_m$) son \cite{anderson}:
+\begin{align}
+    \text{RCS}(\mathbf{x}) &= \text{RCS}_0 + \sum_{i=1}^{5} \text{PCHIP}(v_i, \Delta r_i, x_i) \\
+    C_L(\mathbf{x}, \alpha) &= C_{L,0} + \sum_{i=1}^{5} \text{PCHIP}(v_i, \Delta c_i, x_i) + \text{PCHIP}(v_{\alpha}, \Delta c_{\alpha}, \alpha) \\
+    E(\mathbf{x}, \alpha) &= E_0 + \sum_{i=1}^{5} \text{PCHIP}(v_i, \Delta e_i, x_i) + \text{PCHIP}(v_{\alpha}, \Delta e_{\alpha}, \alpha) \\
+    C_m(\mathbf{x}, \alpha) &= C_{m,0} + \sum_{i=1}^{5} \text{PCHIP}(v_i, \Delta cm_i, x_i) + \text{PCHIP}(v_{\alpha}, \Delta cm_{\alpha}, \alpha)
+\end{align}
+donde $v_i$ representa el vector de valores del parámetro geométrico $i$, $v_{\alpha}$ es el vector de ángulos de ataque simulados, y los términos $\Delta$ denotan los incrementos de respuesta frente al diseño base \cite{anderson}.
+
+\subsection*{4. Restricción Dinámica de Sustentación, Estabilidad Longitudinal y Función de Barrera}
+Un riesgo clásico en la optimización por metamodelos es que el algoritmo intente realizar modificaciones extremas simultáneas (por ejemplo, adelantar la cresta al máximo, reducir el espesor y disminuir la flecha) asumiendo un comportamiento lineal idílico \cite{anderson}. En la física real descrita por Anderson \cite{anderson}, forzar los límites geométricos provoca un desprendimiento prematuro de la capa límite y un incremento drástico de la resistencia inducida y de perfil \cite{anderson}.
+
+Para evitar que el ordenador elija diseños no físicos, se implementó una \textbf{función de barrera exponencial (\textit{Barrier Penalty})} \cite{anderson}. Su funcionamiento se estructura en tres fases:
+\begin{enumerate}
+    \item \textbf{Normalización de variables ($\hat{x}$):} Cada parámetro geométrico se escala entre $0$ y $1$ según su proximidad a los límites críticos de diseño \cite{anderson}.
+    \item \textbf{Cálculo del índice de acumulación extrema ($N_{\text{ext}}$):} Se evalúa la superación conjunta del umbral de tolerancia permisible ($1.5$) \cite{anderson}:
+    \begin{equation}
+        N_{\text{ext}} = \max\left(0, \left( \hat{c} + \hat{t} + \hat{\delta} + \hat{\Lambda} \right) - 1.5\right)
+    \end{equation}
+    Si la suma supera $1.5$, el índice $N_{\text{ext}}$ se activa; si permanece por debajo, vale $0$ \cite{anderson}.
+    \item \textbf{Aplicación del castigo no lineal ($25 \cdot (N_{\text{ext}})^3$):} Si $N_{\text{ext}} > 0$, la eficiencia y la sustentación sufren un castigo severo \cite{anderson}:
+    \begin{align}
+        E_{\text{penalizada}} &= E - 25 \cdot (N_{\text{ext}})^3 \\
+        C_{L,\text{penalizado}} &= C_L - 0.05 \cdot N_{\text{ext}}
+    \end{align}
+    \textit{Justificación de los parámetros:} El factor cúbico $(N_{\text{ext}})^3$ representa el comportamiento no lineal y repentino de la separación de la capa límite en aerodinámica, mientras que el coeficiente de escala $25$ actúa como penalización severa para forzar al algoritmo a descartar geometrías en la zona de riesgo \cite{anderson}.
+\end{enumerate}
+
+Asimismo, se impuso una \textbf{restricción dinámica de sustentación}. Para asegurar que la nueva aeronave sea capaz de volar al menos igual de bien que en la condición de máxima eficiencia del prototipo original, se exige que la combinación seleccionada $(\mathbf{x}, \alpha)$ cumpla estrictamente la inecuación \cite{raymer, anderson}:
+\begin{equation}
+    C_{L,\text{penalizado}}(\mathbf{x}, \alpha) \ge C_{L,\text{original}}(\alpha = 5.0^\circ) = 0.2164
+\end{equation}
+Adicionalmente, para garantizar la estabilidad estática longitudinal y evitar un momento flector o torsor excesivo en la raíz alar, se controla que el coeficiente de momento de cabeceo se mantenga acotado en un rango seguro ($\vert C_m \vert \le 0.04$) \cite{anderson}.
+
+\subsection*{5. Función Objetivo y Resolución Multicriterio}
+Siguiendo los fundamentos de optimización multiobjetivo de Deb \cite{deb}, el problema se plantea mediante una función de utilidad ponderada basada en una Matriz de Decisión Multicriterio (MCDM). Las respuestas de la Sección Radar y de la Eficiencia se normalizan entre $0$ y $1$ mediante el criterio Min-Max \cite{deb}:
+\begin{equation}
+    \overline{\text{RCS}} = \frac{\text{RCS} - \text{RCS}_{\text{peor}}}{\text{RCS}_{\text{mejor}} - \text{RCS}_{\text{peor}}} \quad ; \quad \overline{E} = \frac{E - E_{\text{peor}}}{E_{\text{mejor}} - E_{\text{peor}}}
+\end{equation}
+
+La función objetivo global $S(\mathbf{x})$ a maximizar se define como \cite{deb}:
+\begin{equation}
+    S(\mathbf{x}) = 0.65 \cdot \overline{\text{RCS}} + 0.35 \cdot \overline{E}
+\end{equation}
+dando un peso del 65\% a la reducción de la firma radar (prioridad de observabilidad) y un 35\% al mantenimiento de la eficiencia aerodinámica \cite{deb}. Mediante una búsqueda sistemática en malla continua de seis dimensiones en MATLAB (evaluando conjuntamente la geometría y el ángulo de ataque), se obtiene la configuración óptima definitiva \cite{anderson, deb}.
+
+\subsection*{6. Resultados del Proceso de Optimización}
+Tras la ejecución del script en MATLAB, la búsqueda sistemática multivariable arrojó la configuración geométrica y operativa óptima. La Tabla~\ref{tab:resultados} resume la comparativa frente a la condición de referencia del prototipo original \cite{anderson}.
+
+\begin{table}[h]
+\centering
+\caption{Comparativa entre el prototipo original y la configuración aeronáutica óptima obtenida en MATLAB con $\alpha$ libre.}
+\label{tab:resultados}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Parámetro / Prestación} & \textbf{Prototipo Original (Ref. $5.0^\circ$)} & \textbf{Configuración Óptima} & \textbf{Mejora / Variación} \\
+\midrule
+Porcentaje de Cresta ($c$) & $35.0\%$ & $60.00\%$ & Mayor sigilo frontal \cite{anderson} \\
+Relación de Espesor ($t = T/C$) & $4.0\%$ & $5.82\%$ & Perfil optimizado \cite{anderson} \\
+Ángulo del Borde de Ataque ($\delta$) & $15.0^\circ$ & $11.82^\circ$ & Borde afinado \cite{anderson} \\
+Ángulo de Torsión ($\tau$) & $0.0^\circ$ & $0.00^\circ$ & Simetría estructural \cite{anderson} \\
+Ángulo de Flecha ($\Lambda$) & $53.0^\circ$ & $56.45^\circ$ & Flecha balanceada \cite{anderson} \\
+\midrule
+\textbf{Ángulo de Ataque Operativo ($\alpha$)} & $5.0^\circ$ & \textbf{$4.00^\circ$} & Morro más bajo en crucero \cite{anderson} \\
+Sección Radar Frontal (RCS) & $-34.48$ dBsm & \textbf{$-53.72$ dBsm} & Reducción de $-19.24$ dB \cite{anderson} \\
+Coeficiente de Sustentación ($C_L$) & $0.2164$ & \textbf{$0.2233$} & Cumple $C_L \ge 0.2164$ \cite{raymer, anderson} \\
+Eficiencia Aerodinámica ($E$) & $14.38$ & \textbf{$15.60$} & $+8.5\%$ de incremento \cite{anderson} \\
+Momento de Cabeceo ($C_m$) & $0.0241$ & \textbf{$-0.0067$} & Estabilidad longitudinal neutra \cite{anderson} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El diseño optimizado reduce drásticamente la RCS frontal hasta los $-53.72$ dBsm \cite{anderson}. Asimismo, el algoritmo determina que volando a un ángulo de ataque recomendado de $\alpha = 4.00^\circ$ \cite{anderson}, el coeficiente de sustentación resultante ($0.2233$) supera holgadamente la restricción fijada frente al prototipo original a $5.0^\circ$ ($0.2164$), elevando la eficiencia aerodinámica hasta $15.60$ y manteniendo un momento de cabeceo prácticamente neutro ($C_m = -0.0067$) que minimiza las cargas en la raíz alar y en las superficies de control \cite{anderson}.
+
+\newpage
+
+\appendix
+\section{Anexo: Explicación Línea a Línea del Script de MATLAB}
+En este anexo se detalla la estructura y el funcionamiento computacional del código de optimización implementado en MATLAB para el desarrollo de este TFG.
+
+\begin{enumerate}
+    \item \textbf{Inicialización y limpieza de entorno (Líneas 1-3):}
+    \begin{lstlisting}
+    clear; clc; close all;
+    \end{lstlisting}
+    Limpia el espacio de trabajo, borra la consola y cierra todas las figuras previas para evitar conflictos en la ejecución.
+
+    \item \textbf{Carga automática y limpieza de datos desde Excel (Líneas 5-15):}
+    \begin{lstlisting}
+    archivoExcel = 'OPTI.xlsx';
+    tblTeleco = readtable(archivoExcel, 'Sheet', 'DATOS TELECO');
+    tblAero   = readtable(archivoExcel, 'Sheet', 'DATOS AERO');
+    \end{lstlisting}
+    Se leen directamente las tablas del archivo Excel que contienen los resultados numéricos de electromagnetismo y aerodinámica, garantizando la trazabilidad de los datos \cite{anderson}. Se utiliza una función anónima con expresiones regulares (\texttt{regexprep}) para limpiar símbolos de grados y convertir cadenas de texto a formato numérico real.
+
+    \item \textbf{Extracción del límite de sustentación y derivadas de $\text{AoA}$ (Líneas 17-35):}
+    \begin{lstlisting}
+    tblOrig5 = tblAero(tblAero.CASO == 1 & tblAero.AoA == 5, :);
+    cl_ref_5deg = tblOrig5.CL; % Exactamente 0.2164
+    \end{lstlisting}
+    Se aísla el valor objetivo del Caso 1 a $5.0^\circ$ ($C_L = 0.2164$) para definir el listón de sustentación \cite{anderson}. A continuación, filtrando los datos del Caso 2 a lo largo de los distintos ángulos de ataque simulados, se construyen las curvas de derivadas incrementales de $C_L$, eficiencia $E$ y $C_m$ respecto a $\alpha = 4.0^\circ$.
+
+    \item \textbf{Extracción de series geométricas a $\text{AoA} = 4.0^\circ$ (Líneas 37-55):}
+    \begin{lstlisting}
+    extraerSerie = @(casosVect, colNombre) ...
+        sortrows(innerjoin(tblTeleco(ismember(tblTeleco.CASO, casosVect), :), ...
+        tblAero(tblAero.AoA == 4, :), 'Keys', 'CASO'), colNombre);
+    \end{lstlisting}
+    Mediante uniones relacionales (\texttt{innerjoin}) y ordenación estricta (\texttt{sortrows}), se extraen las series de variación de cada variable geométrica (Cresta, T/C, Deltale, Tor y Flecha) respecto al caso base a $\text{AoA} = 4.0^\circ$.
+
+    \item \textbf{Bucle de optimización multivariable continua 6D (Líneas 57-110):}
+    \begin{lstlisting}
+    grid_AoA = linspace(3.0, 6.0, 16);
+    for cr = grid_CR
+        for tc = grid_TC
+            ...
+            for aoa = grid_AoA
+                ...
+    \end{lstlisting}
+    Se define una malla de exploración continua de 6 dimensiones (5 parámetros geométricos más el ángulo de ataque operativo $\alpha$). En cada iteración de los bucles anidados, el script suma los incrementos geométricos interpolados por PCHIP y la sensibilidad por ángulo de ataque para estimar la RCS, el $C_L$, la eficiencia $E$ y el $C_m$ de cada punto del espacio de búsqueda \cite{montgomery, anderson}.
+
+    \item \textbf{Evaluación de la función de barrera y restricciones (Líneas 112-130):}
+    \begin{lstlisting}
+    nivel_extremo = max(0, (ext_cr + ext_tc + ext_dl + ext_fl) - 1.5);
+    e = e - (25 * (nivel_extremo ^ 3));
+    if cl >= cl_ref_5deg && e > 8.0 && abs(cm) <= 0.04
+    \end{lstlisting}
+    Se calcula el índice de acumulación extrema de variables y se aplica la penalización cúbica no lineal si se rebasa el umbral $1.5$ \cite{anderson}. A continuación, la estructura condicional \texttt{if} filtra únicamente aquellas soluciones que superen la sustentación de referencia a $5.0^\circ$ ($C_L \ge 0.2164$), muestren eficiencia viable ($E > 8.0$) y mantengan un momento de cabeceo estable ($\vert C_m \vert \le 0.04$) \cite{anderson}.
+
+    \item \textbf{Normalización Min-Max y función de utilidad (Líneas 132-160):}
+    \begin{lstlisting}
+    score = 0.65 * rcs_norm + 0.35 * e_norm;
+    if score > best_score
+        best_score = score;
+        best_x = [cr, tc, dl, tr, fl];
+        best_aoa = aoa;
+    \end{lstlisting}
+    Las respuestas de RCS y eficiencia se normalizan entre 0 y 1 mediante el criterio Min-Max y se combinan en la función de utilidad ponderada (65\% sigilo, 35\% aerodinámica) \cite{deb}. El algoritmo almacena la configuración que maximice este índice (\texttt{best\_score}) y finalmente imprime por pantalla los resultados formateados \cite{anderson}.
+\end{enumerate}
+
+\begin{thebibliography}{9}
+\bibitem{raymer} 
+Raymer, D. P. (2018). \textit{Aircraft Design: A Conceptual Approach} (6th ed.). American Institute of Aeronautics and Astronautics. 
+
+\bibitem{montgomery} 
+Montgomery, D. C. (2017). \textit{Design and Analysis of Experiments} (9th ed.). John Wiley \& Sons. 
+
+\bibitem{anderson}
+Anderson, J. D. (2010). \textit{Fundamentals of Aerodynamics} (5th ed.). McGraw-Hill Education. 
+
+\bibitem{deb} 
+Deb, K. (2001). \textit{Multi-Objective Optimization using Evolutionary Algorithms}. John Wiley \& Sons. 
+\end{thebibliography}
+
+\end{document}
